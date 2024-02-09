@@ -6,30 +6,21 @@ import {
   collection,
   getDoc,
   writeBatch,
-  type QuerySnapshot,
-  type DocumentData,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
 const notesCollectionFor = (folderId: string) =>
   collection(db, "folders", folderId, "notes");
 
-function qsToArray(qs: QuerySnapshot<DocumentData, DocumentData>) {
-  const arr: DocumentData[] = [];
-  qs.forEach((doc) => {
-    arr.push({
-      id: doc.id,
-      ...doc.data(),
-    });
-  });
-  return arr;
-}
-
 class Folder {
   static async getAll() {
     try {
       const qs = await getDocs(collection(db, "folders"));
-      const folders = qsToArray(qs);
+      console.dir(
+        qs.docs.map((doc) => doc.data()),
+        { depth: Infinity },
+      );
+      const folders = qs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       return folders;
     } catch (err) {
       console.log("[service getFolders()]");
@@ -81,8 +72,8 @@ class Folder {
 class Note {
   static async getNotes(id: string) {
     const query = notesCollectionFor(id);
-    const docs = await getDocs(query);
-    return qsToArray(docs);
+    const qs = await getDocs(query);
+    return qs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   }
 
   static async updateNote({

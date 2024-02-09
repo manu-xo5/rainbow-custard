@@ -1,3 +1,4 @@
+import plugin from "tailwindcss/plugin";
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
@@ -17,6 +18,9 @@ export default {
       },
     },
     extend: {
+      spacing: {
+        "app-bar": "var(--app-bar)",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -73,5 +77,14 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(({ addBase }) => {
+      addBase({
+        body: {
+          backgroundColor: "theme(colors.primary.DEFAULT)",
+        },
+      });
+    }),
+  ],
 };
