@@ -1,31 +1,34 @@
 import * as React from "react";
 import Loader from "@/components/icons/Loader";
-import { DocumentData } from "firebase/firestore";
-import { Folder } from "@/lib/api";
 import { useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
-const __data = `[{"id":"CxsM8WDSf4c48tSSZHWe","title":"todo"},{"id":"Ti9gijiGLRI5llqM2r5g","accentColor":"#000000","title":"plans & new feature","icon":"😄"},{"id":"WlGXKJDpDJyQtR7SABCv","icon":"😄","accentColor":"#000000","title":"idea"},{"id":"eJkeJOu9LHplhezUvek6","title":"bugs","icon":"😄","accentColor":"#000000"},{"id":"m0nuOw1296dNqjr0HvHU","accentColor":"#c03d00","title":"crop curry","icon":"🚿"},{"id":"oLbYyX1XOVztLe3tKeeT","title":"cabi"},{"id":"tkNQTb8Bjbgo45OHkNG6","title":"sorted wallet"},{"id":"vkQQztYrvLHmlatn1d9w","icon":"😘","title":"skin curry","accentColor":"#ff75a1"},{"id":"zsstBObktHWsNfP0ylyG","accentColor":"#5cc9ff","icon":"🎭","title":"Stoicism_ / "}]`;
+import { useQuery } from "@tanstack/react-query";
+import { Folder, TFolder } from "@/lib/api";
+import { FolderClosedIcon, Trash2Icon } from "lucide-react";
+import { queryClient } from "@/components/RootLayout";
 
 export const FolderList: React.FC = () => {
-  const [data, setData] = React.useState<DocumentData[] | null>(null);
+  const $folder = useQuery<TFolder[]>({
+    queryKey: ["folders"],
+    queryFn: () => Folder.getAll(),
+  });
+  const data = $folder.data ?? [];
   const navigate = useNavigate();
   const { id: selectedNote } = useParams();
 
   React.useEffect(() => {
     (async () => {
-      const data = JSON.parse(__data); // await Folder.getAll();
+      const data = await Folder.getAll();
 
-      setData(data);
       if (!selectedNote) {
-        navigate(data[0].id);
+        navigate(data[0].id, { replace: true });
         console.log(data[0].id);
       }
     })();
   }, [navigate, selectedNote]);
 
   return (
-    <>
+    <div>
       {data === null ? (
         <div className="h-[calc(100vh-var(--app-bar))] grid place-items-center">
           <Loader className="animate-spin" />
@@ -36,17 +39,31 @@ export const FolderList: React.FC = () => {
             <button
               key={id}
               className={cn(
-                "block rounded-lg hover:bg-primary/75 w-full px-3 pt-1 pb-1.5 text-left capitalize",
+                "group flex items-center cursor-default rounded-lg hover:bg-primary/75 w-full px-3 pt-1 pb-1.5 text-left capitalize min-w-0",
                 selectedNote === id && "!bg-primary",
               )}
               type="button"
               onClick={() => navigate("/notes/" + id)}
             >
-              {title}
+              <span className="flex flex-1 min-w-0 items-center gap-2">
+                <FolderClosedIcon size="1em" className="shrink-0" />
+                <span className="block truncate">{title}</span>
+              </span>
+
+              <button
+                className="group-hover:opacity-100 opacity-0 bg-secondary box-content p-1 rounded transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  Folder.deleteFolders({ folderList: [id] });
+                  queryClient.invalidateQueries({ queryKey: ["folders"] });
+                }}
+              >
+                <Trash2Icon size={"0.8em"} />
+              </button>
             </button>
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 };

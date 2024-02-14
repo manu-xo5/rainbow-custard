@@ -12,16 +12,18 @@ import { db } from "./firebase";
 const notesCollectionFor = (folderId: string) =>
   collection(db, "folders", folderId, "notes");
 
+export type TFolder = {
+  id: string;
+  title: string;
+};
+
 class Folder {
   static async getAll() {
     try {
       const qs = await getDocs(collection(db, "folders"));
-      console.dir(
-        qs.docs.map((doc) => doc.data()),
-        { depth: Infinity },
-      );
       const folders = qs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      return folders;
+      console.log(folders)
+      return folders as TFolder[];
     } catch (err) {
       console.log("[service getFolders()]");
       console.error(err);
@@ -69,11 +71,16 @@ class Folder {
   }
 }
 
+export type TNote = {
+  note: string;
+  id: string;
+};
+
 class Note {
   static async getNotes(id: string) {
     const query = notesCollectionFor(id);
     const qs = await getDocs(query);
-    return qs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return qs.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as TNote[];
   }
 
   static async updateNote({
